@@ -92,41 +92,26 @@ The chain rule is at the heart of backpropagation. Assume you are given input  $
 where $\matr{W} \in \Rset^{2x2}$ and $\vect{x}$, $\vect{b} \in \Rset^2$. Give an expression for   $\frac{ \partial L}{\partial \matr{W}}$ and  $\frac{ \partial L}{\partial \vect{b}}$ in terns of $\frac{ \partial L}{\partial \vect{y}}$ and $\vect{x}$ using the chain rule.
 
 \begin{align*}
-	\frac{ \partial L}{\partial \matr{W}} &= \frac{ \partial \vect{y}}{\partial \matr{W}} \cdot \frac{ \partial L}{\partial \vect{y}} \\
-	&= \sum_{i=1}^2 \frac{ \partial y_i}{\partial \matr{W}} \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_i \\
-	&=  \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_1 
-		\begin{bmatrix}
-   			\rule[0.5mm]{0.8cm}{0.1mm} \; \vect{x}^{\top} \; \rule[0.5mm]{0.8cm}{0.1mm} \\
-   			\rule[0.5mm]{0.8cm}{0.1mm} \; \vect{0}^{\top} \; \rule[0.5mm]{0.8cm}{0.1mm} \\
-		\end{bmatrix} + 
-		\Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_2
-		\begin{bmatrix}
-   			\rule[0.5mm]{0.8cm}{0.1mm} \; \vect{0}^{\top} \; \rule[0.5mm]{0.8cm}{0.1mm} \\
-   			\rule[0.5mm]{0.8cm}{0.1mm} \; \vect{x}^{\top} \; \rule[0.5mm]{0.8cm}{0.1mm} \\
-		\end{bmatrix} \\
-	&=  \begin{bmatrix}
-		\big(\frac{ \partial L}{\partial \vect{y}}\big)_1  \cdot \vect{x}^{\top} \\
-		\big(\frac{ \partial L}{\partial \vect{y}}\big)_2  \cdot \vect{x}^{\top}  \\
-	      \end{bmatrix} \\
-	&= \frac{ \partial L}{\partial \vect{y}} \vect{x}^{\top}
+	\frac{ \partial L}{\partial \matr{W}} &= \frac{ \partial L}{\partial \vect{y}} \cdot \frac{ \partial \vect{y}}{\partial \matr{W}}\\
+	&= \sum_{i=1}^2  \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_i  \frac{ \partial y_i}{\partial \matr{W}}\\
+    &= \vect{x} \; \frac{ \partial L}{\partial \vect{y}}
 \end{align*}
 We can write this as an outer product:
 \begin{equation*}
-    \frac{ \partial L}{\partial \matr{W}}^\top = \frac{ \partial L}{\partial \vect{y}}^\top \otimes \vect{x}^{\top}
+    \frac{ \partial L}{\partial \matr{W}}^\top = \frac{ \partial L}{\partial \vect{y}}^\top \; \vect{x}^{\top}
 \end{equation*}
 
 Now we have for  $\frac{ \partial L}{\partial \vect{b}}$ :
 \begin{align*}
-	\frac{ \partial L}{\partial \vect{b}} &= \frac{ \partial \vect{y}} {\partial \vect{b}} \cdot \frac{ \partial L}{\partial \vect{y}}  \\
-	&= \sum_{i=1}^2 \frac{ \partial y_i}{\partial \vect{b}}  \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_i \\
-	&= 1 \cdot \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_1 + 1 \cdot \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_2 \\
-	&=  \sum_{i=1}^2  \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_i
+	\frac{ \partial L}{\partial \vect{b}} &= \frac{ \partial \vect{L}} {\partial \vect{y}} \cdot \frac{ \partial y}{\partial \vect{b}}  \\
+	&= \sum_{i=1}^2 \Bigg( \frac{ \partial L}{\partial \vect{y}} \Bigg)_i \frac{ \partial y_i}{\partial \vect{b}}  \\
+	&= \frac{ \partial L}{\partial \vect{y}} 
 \end{align*}
 
 \subsection{Softmax}
 Multinomial logistic regression is a generalization of logistic regression into multiple classes. The softmax expression is at the crux of this technique. After receiving n unconstrained values, the softmax function normalizes these values to n values that all sum to 1. This can then be perceived as probabilities attributed to the various classes by a classifier. Your task here is to back-propagate error through this module. The softmax expression which indicates the probability of the j-th class is as follows:
 \[
-	\mathrm {P}(z = j \; | \; \vect{x} ) = y_j = \frac{\exp(\beta x_j)}{\sum_i \exp(\beta x_i)}
+	\mathbb{P}(z = j \; | \; \vect{x} ) = y_j = \frac{\exp(\beta x_j)}{\sum_i \exp(\beta x_i)}
 \]
 
 What is the expression for  $\frac{\partial y_j}{x_i}$? (Hint: Answer differs when i = j and i $\ne$ j)
