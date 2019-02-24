@@ -1,0 +1,256 @@
+\documentclass[11pt]{article}
+
+\usepackage{times}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[psamsfonts]{amssymb}
+\usepackage{latexsym}
+\usepackage{color}
+\usepackage{graphics}
+\usepackage{enumerate}
+\usepackage{amstext}
+\usepackage{url}
+\usepackage{epsfig}
+\usepackage{bm}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage{mathtools}
+ 
+\def\Kset{\mathbb{K}}
+\def\Nset{\mathbb{N}}
+\def\Qset{\mathbb{Q}}
+\def\Rset{\mathbb{R}}
+\def\Sset{\mathbb{S}}
+\def\Zset{\mathbb{Z}}
+\def\squareforqed{\hbox{\rlap{$\sqcap$}$\sqcup$}}
+\def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
+\penalty50\hskip1em\null\nobreak\hfil\squareforqed
+\parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
+
+\DeclareMathOperator*{\E}{\rm E}
+\DeclareMathOperator*{\argmax}{\rm argmax}
+\DeclareMathOperator*{\argmin}{\rm argmin}
+\DeclareMathOperator{\sgn}{sign}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\last}{last}
+\DeclareMathOperator{\sign}{\sgn}
+\DeclareMathOperator{\diag}{diag}
+\providecommand{\abs}[1]{\lvert#1\rvert}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+\def\vcdim{\textnormal{VCdim}}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\newcommand{\cX}{{\mathcal X}}
+\newcommand{\cY}{{\mathcal Y}}
+\newcommand{\cA}{{\mathcal A}}
+\newcommand{\ignore}[1]{}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\be}{\begin{enumerate}}
+\newcommand{\ee}{\end{enumerate}}
+\newcommand{\bd}{\begin{description}}
+\newcommand{\ed}{\end{description}}
+\newcommand{\h}{\widehat}
+\newcommand{\e}{\epsilon}
+\newcommand{\mat}[1]{{\mathbf #1}}
+\newcommand{\R}{\mat{R}}
+\newcommand{\0}{\mat{0}}
+\newcommand{\M}{\mat{M}}
+\newcommand{\D}{\mat{D}}
+\renewcommand{\r}{\mat{r}}
+\newcommand{\x}{\mat{x}}
+\renewcommand{\u}{\mat{u}}
+\renewcommand{\v}{\mat{v}}
+\newcommand{\w}{\mat{w}}
+\renewcommand{\H}{\text{0}}
+\newcommand{\T}{\text{1}}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\xxi}{{\boldsymbol \xi}}
+\newcommand{\ssigma}{{\boldsymbol \sigma}}
+\newcommand{\Alpha}{{\boldsymbol \alpha}}
+\newcommand{\tts}{\tt \small}
+\newcommand{\hint}{\emph{hint}}
+\newcommand{\matr}[1]{\bm{#1}}     % ISO complying version
+\newcommand{\vect}[1]{\bm{#1}}     % ISO complying version
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\labelitemii}{$\cdot$}
+\renewcommand{\labelitemiii}{$\diamond$}
+\renewcommand{\labelitemiv}{$\ast$}
+
+\newenvironment{solution}{\vspace{.25cm}\noindent{\it Solution:}}{}
+
+\begin{document}
+
+\noindent DS-GA 1008:\\
+Deep Learning, Spring 2019\\
+Homework Assignment 2 \\
+Yves Greatti - yg390\\
+
+\section*{1. Fundamentals}
+\subsection*{1.1. Convolution}
+Table \ref{tab1} depicts two matrices. The one on the left represents a $5\times 5$ single-channel image $\matr{A}$. The one on the right
+ represents a $3\times 3$ convolution kernel $\matr{B}$. 
+\begin{itemize}
+    \item[(a)] What is the dimensionality of the output if we forward propagate the image over the given convolution kernel with no padding and stride of 1? \\
+    
+     \smallskip
+    If you apply the convolution kernel with no padding and a stride of 1 over the input image  $\matr{A}$ we obtain an output image of size (3,3).
+    This is illustrated in the animations  from \href{https://github.com/vdumoulin/conv_arithmetic} {"A technical report on convolution arithmetic in the context of deep learning"}
+    but with in our case, no padding and a stride of one.
+    
+    \item[(b)] Give a general formula of the output width $O$ in terms of the input width $I$, kernel width $K$, stride $S$, and padding $P$ (both in the beginning and in the end). Note that the same formula holds for the height. Make sure that your answer in part (a) is consistent with your formula. \\
+    
+    \smallskip
+    The padding $P$ being at the beginning and at the end, and having a stride of $S$, we obtain a general formula for the output width which will be similar to the one for the height :
+    \[
+    	O  = \floor*{\frac{I + 2 * P - K}{S}} + 1 
+    \]
+    For   $5\times 5$ image $\matr{A}$, and $3\times 3$  convolution kernel $\matr{B}$, we have $O_{\text{width}} =  \floor*{\frac{5 + 2 * 0 - 3}{1}} + 1 = 3 = O_{\text{height}}$
+    
+    \item[(c)] Compute the output $\matr{C}$ of forward propagating the image over the
+given convolution kernel. Assume that the bias term of the convolution is zero.\\
+
+	\smallskip
+	If we apply the kernel $\matr{B}$ to the upper corner of size   $3\times 3$ of the image $\matr{A}$, we have: 
+	$4 \times 3 + 5 \times 3 + 2 \times 3 + 3 \times 5 +  3 \times 5 + 2 \times 5 + 4 \times 2 + 3 \times 4 + 4 \times 3 = 109$
+	Similarly we can find the entries for the rest of the output $\matr{C}$ :
+
+	    \begin{table}[!ht]
+		    \centering
+    		$\matr{C}$ = \begin{tabular}{|c|c|c|} 
+    			\hline
+			109 & 92 & 72 \\ \hline 
+		        108 & 85 & 74 \\ \hline
+       			110 & 74 & 79 \\ \hline 
+   		 \end{tabular}
+    	  \end{table}
+
+    \item[(d)] Suppose the gradient backpropagated from the layers above this layer is a $3\times 3$ matrix of all 1s. Write the value of the gradient (w.r.t.~the input image) backpropagated out of this layer.\\
+    
+    \smallskip
+    Using the chain rule, we have:
+   \begin{align*}
+    	\frac{\partial E}{ \partial  \matr{A}_{ij}} &= \sum_{k,l=1,3} \frac{\partial E}{\partial \matr{C}_{kl}}   \frac{\partial \matr{C}_{kl}} {\partial  \matr{A}_{ij}} \\
+	&= \sum_{k,l=1,3}  \frac{\partial \matr{C}_{kl}} {\partial  \matr{A}_{ij}}
+    \end{align*}
+    Expanding this, we obtain:
+   \begin{gather*}
+   	\frac{\partial E}{ \partial  \matr{A}_{11}} = \frac{\partial \matr{C}_{11}} {\partial  \matr{A}_{11}} =   \matr{B}_{11} \\
+   	\frac{\partial E}{ \partial  \matr{A}_{12}} = \frac{\partial \matr{C}_{11}} {\partial  \matr{A}_{12}} + \frac{\partial \matr{C}_{12}} {\partial  \matr{A}_{12}} =    \matr{B}_{12} + \matr{B}_{11} \\
+	\frac{\partial E}{ \partial  \matr{A}_{13}} = \frac{\partial \matr{C}_{11}} {\partial  \matr{A}_{13}} + \frac{\partial \matr{C}_{12}} {\partial  \matr{A}_{13}} + \frac{\partial \matr{C}_{13}} {\partial  \matr{A}_{13}}  =   \matr{B}_{13} + \matr{B}_{12} + \matr{B}_{11} \\
+	\vdots
+    \end{gather*}
+    If we keep expanding each term we realize that each term is the result of a convolution between a 180-degree rotated filter $\matr{B}$ and the loss gradient $\frac{\partial E}{\partial \matr{C}}$ which a matrix of all 1s.
+    Or the gradient backpropagated  loss is the convolution of the loss to the output with the kernel $\matr{B}$:
+    $\frac{\partial E}{\partial \matr{A}} = \frac{\partial E}{\partial \matr{C}} * {\matr{B}}$ which results in:
+    
+    	    \begin{table}[!ht]
+		    \centering
+    		 $\frac{\partial E}{\partial \matr{A}}$ = \begin{tabular}{|c|c|c|c|c|}  
+    			\hline
+    			4  & 7    & 10 & 6   & 3 \\ \hline 
+		        9   & 17 & 25 & 16 & 8 \\ \hline
+		        11 & 23 & 34 & 23 & 11 \\ \hline 
+		        7   & 16 & 24 & 17 & 8 \\ \hline
+		        2   & 6   & 9   & 7   & 3 \\ \hline
+    		\end{tabular}\hspace{1cm}
+        	 \end{table}
+
+\end{itemize}
+
+ 
+\begin{table}[!ht]
+    \centering
+    $\matr{A}$ =  \begin{tabular}{|c|c|c|c|c|} 
+    \hline
+       4 & 5 & 2 & 2 & 1 \\ \hline 
+       3 & 3 & 2 & 2 & 4 \\ \hline
+       4 & 3 & 4 & 1 & 1 \\ \hline 
+       5 & 1 & 4 & 1 & 2 \\ \hline
+       5 & 1 & 3 & 1 & 4 \\ \hline
+    \end{tabular}\hspace{1cm}
+    $\matr{B}$ = \begin{tabular}{|c|c|c|} 
+    \hline
+       4 & 3 & 3 \\ \hline 
+       5 & 5 & 5 \\ \hline
+       2 & 4 & 3 \\ \hline 
+    \end{tabular}
+    \caption{Image Matrix ($5\times 5$) and a convolution kernel ($3\times 3$).}\label{tab1}   
+\end{table}
+
+ Hint: You are given that $\frac{\partial E}{\partial \matr{C}_{ij}} = 1$ for some scalar error $E$ and $i,j\in\{1,2,3\}$. You need to compute $\frac{\partial E}{\partial \matr{A}_{ij}}$ for  $i,j\in\{1, \ldots, 5\}$. The chain rule should help!
+\newpage
+\subsection*{1.2. Pooling}
+The pooling is a technique for sub-sampling and comes in different flavors, for example max-pooling, average pooling, LP-pooling. 
+\begin{itemize}
+    \item[(a)] List the \texttt{torch.nn} modules for the 2D versions of these pooling techniques and read on what they do.\\
+    \medskip
+    \\
+    The 2D pooling layers are
+	\begin{itemize}
+		\item MaxPool2d
+		\item AvgPool2d
+		\item FractionalMaxPool2d
+		\item LPPool2d
+		\item AdaptativeMaxPool2d
+		\item AdaptativeAvgPool2d
+	\end{itemize}
+    
+    
+    \item[(b)] Denote the $k$-th input feature maps to a pooling module as $\matr{X}^k \in \mathbb{R}^{H_{\textrm{in}}\times W_{\textrm{in}}} $ where $H_{\textrm{in}}$ and $W_{\text{in}}$ represent the input height and width, respectively. Let $\matr{Y}^k \in \mathbb{R}^{H_{\text{out}}\times W_{\textrm{out}}}$ denote the $k$-th output feature map of the module where $H_{\textrm{out}}$ and $W_{\textrm{out}}$ represent the output height and width, respectively. Let $S^{k}_{i,j}$ be a list of the indexes of elements in the sub-region of $X^k $ used for generating $\matr{Y}^k_{i,j}$, the $(i,j)$-th entry of $\matr{Y}^{k}$. 
+    Using this notation, give formulas for $\matr{Y}^k_{i,j} $ from three pooling modules.\\
+    
+	\begin{itemize}
+		\item MaxPool2d
+		\[
+			\matr{Y}^k_{i,j} = \max \{ X^k_{l,m}| (l,m) \in  S^{k}_{i,j} \}
+		\]
+		\item AvgPool2d
+		\[
+			\matr{Y}^k_{i,j} = \frac{1}{|  S^{k}_{i,j} |} \sum_{(l,m) \in  S^{k}_{i,j}} X^k_{l,m} ~~  \text{where } |  S^{k}_{i,j} | \text{: number of elements (l,m) in } S^{k}_{i,j}
+		\]	
+		\item LPPool2d
+		\[
+			\matr{Y}^k_{i,j} =  (\sum_{(l,m) \in  S^{k}_{i,j}} (X^k_{l,m})^p)^{\frac{1}{p}}
+		\]				
+	\end{itemize}
+        
+    
+    \item[(c)] Write out the result of applying a max-pooling module with kernel size of 2 and stride of 1 to $\matr{C}$ from Part 1.1.\\
+    \smallskip
+    Applying max-pooling with a kernel of size 2 and stride 1 to , we obtain the following output:
+    
+    	    \begin{table}[!ht]
+		    \centering
+    		$\text{max-pooling} (\matr{C})$ = \begin{tabular}{|c|c|} 
+    			\hline
+			109 & 92 \\ \hline 
+		        110 & 85 \\ \hline
+   		 \end{tabular}
+    	  \end{table}
+
+    
+    \item[(d)] Show how and why max-pooling and average pooling can be expressed in terms of LP-pooling.\\
+    \smallskip
+    	\begin{itemize}
+		\item Max-pooling:
+		    Short answer: if we apply max-pooling to the feature map $X$, 
+    		    since $\|X\|_{\infty} = \lim_{p \to \infty} \|X\|_p$ thus max-pooling is LP-pooling for $p \to \infty$.
+		\item Average-pooling:
+		Reusing the notations in question 1.2.b, then for p=1:
+		\begin{align*}
+			\text{LP-pooling} (S^k_{i,j})  &=  \sum_{(l,m) \in  S^{k}_{i,j}} X^k_{l,m} \\
+						&= |  S^{k}_{i,j} | \text{ Average-pooling}(S^k_{i,j})
+		\end{align*}
+		   
+ 	\end{itemize}   
+\end{itemize}
+
+\end{document}
