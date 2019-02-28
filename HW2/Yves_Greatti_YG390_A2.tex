@@ -110,9 +110,9 @@ Table \ref{tab1} depicts two matrices. The one on the left represents a $5\times
     \smallskip
     The padding $P$ being at the beginning and at the end, and having a stride of $S$, we obtain a general formula for the output width which will be similar to the one for the height :
     \[
-    	O  = \floor*{\frac{I + 2 * P - K}{S}} + 1 
+    	O  = \floor*{\frac{I + 2 * P - K}{S} + 1}
     \]
-    For   $5\times 5$ image $\matr{A}$, and $3\times 3$  convolution kernel $\matr{B}$, with P=0 and S=1, we have $O_{\text{width}} =  \floor*{\frac{5 + 2 * 0 - 3}{1}} + 1 = 3 = O_{\text{height}}$
+    For   $5\times 5$ image $\matr{A}$, and $3\times 3$  convolution kernel $\matr{B}$, with P=0 and S=1, we have $O_{\text{width}} =  \floor*{\frac{5 + 2 * 0 - 3}{1}  + 1} = 3 = O_{\text{height}}$
     
     \item[(c)] Compute the output $\matr{C}$ of forward propagating the image over the
 given convolution kernel. Assume that the bias term of the convolution is zero.\\
@@ -227,7 +227,7 @@ The pooling is a technique for sub-sampling and comes in different flavors, for 
 		\[
 			\matr{Y}^k_{i,j} =   (\sum_{(l,m) \in  S^{k}_{i,j}} (X^k_{l,m})^p)^{\frac{1}{p}}
 		\]	
-		Note that PyTorch defined LPPool2d as $(\sum_{x \in X} x^p)^{\frac{1}{p}}$
+		Note that PyTorch defines LPPool2d as $(\sum_{x \in X} x^p)^{\frac{1}{p}}$
 		
 	\end{itemize}
         
