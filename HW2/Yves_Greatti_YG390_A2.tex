@@ -92,6 +92,8 @@
 Deep Learning, Spring 2019\\
 Homework Assignment 2 \\
 Yves Greatti - yg390\\
+\href{https://www.overleaf.com/project/5c7316d634ff9f6576d02da0}{Read-Only Link to tex file}
+
 
 \section*{1. Fundamentals}
 \subsection*{1.1. Convolution}
@@ -147,8 +149,8 @@ given convolution kernel. Assume that the bias term of the convolution is zero.\
 	\frac{\partial E}{ \partial  \matr{A}_{13}} = \frac{\partial \matr{C}_{11}} {\partial  \matr{A}_{13}} + \frac{\partial \matr{C}_{12}} {\partial  \matr{A}_{13}} + \frac{\partial \matr{C}_{13}} {\partial  \matr{A}_{13}}  =   \matr{B}_{13} + \matr{B}_{12} + \matr{B}_{11} \\
 	\vdots
     \end{gather*}
-    If we keep expanding each term we realize that each term is the result of a convolution between the loss gradient $\frac{\partial E}{\partial \matr{C}}$, which is a matrix of all 1s, and a 180-degree rotated filter $\matr{B}$.
-    We have as result:
+    If we keep expanding each term we realize that each term is the result of a "full" convolution between the loss gradient $\frac{\partial E}{\partial \matr{C}}$, which is a matrix of all 1s, and a filter $\matr{B}$ (\href{https://www.mathworks.com/help/matlab/ref/conv2.html}{MATLAB conv2}).
+    We have the result:
     
     	    \begin{table}[!ht]
 		    \centering
