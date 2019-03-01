@@ -1,0 +1,124 @@
+\documentclass[11pt]{article}
+
+\usepackage{times}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[psamsfonts]{amssymb}
+\usepackage{latexsym}
+\usepackage{color}
+\usepackage{graphics}
+\usepackage{enumerate}
+\usepackage{amstext}
+\usepackage{url}
+\usepackage{epsfig}
+\usepackage{bm}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage{mathtools}
+ 
+\def\Kset{\mathbb{K}}
+\def\Nset{\mathbb{N}}
+\def\Qset{\mathbb{Q}}
+\def\Rset{\mathbb{R}}
+\def\Sset{\mathbb{S}}
+\def\Zset{\mathbb{Z}}
+\def\squareforqed{\hbox{\rlap{$\sqcap$}$\sqcup$}}
+\def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
+\penalty50\hskip1em\null\nobreak\hfil\squareforqed
+\parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
+
+\DeclareMathOperator*{\E}{\rm E}
+\DeclareMathOperator*{\argmax}{\rm argmax}
+\DeclareMathOperator*{\argmin}{\rm argmin}
+\DeclareMathOperator{\sgn}{sign}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\last}{last}
+\DeclareMathOperator{\sign}{\sgn}
+\DeclareMathOperator{\diag}{diag}
+\providecommand{\abs}[1]{\lvert#1\rvert}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+\def\vcdim{\textnormal{VCdim}}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\newcommand{\cX}{{\mathcal X}}
+\newcommand{\cY}{{\mathcal Y}}
+\newcommand{\cA}{{\mathcal A}}
+\newcommand{\ignore}[1]{}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\be}{\begin{enumerate}}
+\newcommand{\ee}{\end{enumerate}}
+\newcommand{\bd}{\begin{description}}
+\newcommand{\ed}{\end{description}}
+\newcommand{\h}{\widehat}
+\newcommand{\e}{\epsilon}
+\newcommand{\mat}[1]{{\mathbf #1}}
+\newcommand{\R}{\mat{R}}
+\newcommand{\0}{\mat{0}}
+\newcommand{\M}{\mat{M}}
+\newcommand{\D}{\mat{D}}
+\renewcommand{\r}{\mat{r}}
+\newcommand{\x}{\mat{x}}
+\renewcommand{\u}{\mat{u}}
+\renewcommand{\v}{\mat{v}}
+\newcommand{\w}{\mat{w}}
+\renewcommand{\H}{\text{0}}
+\newcommand{\T}{\text{1}}
+\newcommand{\set}[1]{\{#1\}}
+\newcommand{\xxi}{{\boldsymbol \xi}}
+\newcommand{\ssigma}{{\boldsymbol \sigma}}
+\newcommand{\Alpha}{{\boldsymbol \alpha}}
+\newcommand{\tts}{\tt \small}
+\newcommand{\hint}{\emph{hint}}
+\newcommand{\matr}[1]{\bm{#1}}     % ISO complying version
+\newcommand{\vect}[1]{\bm{#1}}     % ISO complying version
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\labelitemii}{$\cdot$}
+\renewcommand{\labelitemiii}{$\diamond$}
+\renewcommand{\labelitemiv}{$\ast$}
+
+\newenvironment{solution}{\vspace{.25cm}\noindent{\it Solution:}}{}
+
+\begin{document}
+
+Input image $I$, filter $K$ of dimensions $k_1 \times k_2$:
+\begin{itemize}
+\item Cross-correlation:
+\[
+	(I \otimes K)_{ij} = \sum_m \sum_n \sum_c K_{m,n} I_{i+m, j+n}
+\]
+\item Convolution
+\[
+	(I \star K)_{ij} = \sum_m \sum_n \sum_c K_{m,n} I_{i-m, j-n}
+\]
+\end{itemize}
+Convolution is the same as cross-correlation with a 180-degree rotated kernel.
+
+
+\begin{itemize}
+\item Forward equation:
+\[	
+	y_{i,j} = \sum_m \sum_n w_{m,n} x_{i+m,j+n} + b
+\]
+\item Backward equations:
+
+
+\begin{align*}
+	\frac{\partial E}{\partial w_{m',n'}} &= \sum_i \sum_j \frac{\partial E}{\partial y_{i,j}} \cdot \frac{\partial y_{i,j}}{\partial w_{m',n'}} \\
+							   &=  \sum_i \sum_j  \delta_{i,j} \cdot \frac{\partial \sum_m \sum_n w_{m,n} x_{i+m,j+n} + b} {\partial w_{m',n'}} \\
+							   &=  \sum_i \sum_j  \delta_{i,j} \cdot x_{i+m', j+n'} \\
+	\frac{\partial E}{\partial x_{i',j'}} 	   &= \sum_m \sum_n \frac{\partial E}{\partial y_{i'-m, j'-n}}  \cdot \frac{\partial y_{i'-m, j'-n}}{\partial x_{i',j'}} \\
+							   &= \sum_m \sum_n \delta_{i'-m, j'-n} \cdot \frac{\partial  \sum_m' \sum_n' w_{m',n'} x_{i'-m+m',j'-n+n'} + b} {\partial x_{i',j'}} \\
+							   &=  \sum_m \sum_n \delta_{i'-m, j'-n} \cdot w_{m,n}
+\end{align*}
+
+\end{itemize}
+
+\end{document}
