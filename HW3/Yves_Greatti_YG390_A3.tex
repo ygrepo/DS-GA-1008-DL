@@ -25,18 +25,13 @@
 \usetikzlibrary{positioning}
 \tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
 \tikzstyle{io} = [trapezium,trapezium left angle=70,trapezium right angle=-70,minimum height=0.6cm, draw, fill=blue!20, text width=4.5em, text badly centered, node distance=3cm, inner sep=0pt]
-%\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
 \tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, text width=3cm, draw=black, rounded corners, fill=orange!30]
 \tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!20]
-%\tikzstyle{decision} = [diamond, draw, fill=blue!20, text width=6.5em, text badly centered, node distance=3cm, inner sep=0pt]
-%\tikzstyle{decision} = [diamond, draw, fill=blue!20, text width=4.5em, text badly centered, node distance=4cm, inner sep=0pt]
 \tikzstyle{arrow} = [thick,->,>=stealth]
 \tikzstyle{line} = [draw, -latex']
 \tikzstyle{assignment} = [trapezium, trapezium left angle=80, trapezium right angle=100, minimum height=1cm, text centered, draw=black, fill=blue!30, text width=4.5cm]
 \tikzstyle{block} = [rectangle, draw, fill=blue!20, text width=5em, text centered, rounded corners, minimum height=4em]
-%\tikzstyle{mycircle} = [circle, thick, draw=orange, minimum height=4mm]
 \tikzstyle{cloud} = [draw=orange, circle, thick,  minimum height=2em]
-%\tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm,minimum height=2em]
 
 \def\Kset{\mathbb{K}}
 \def\Nset{\mathbb{N}}
@@ -262,7 +257,7 @@ In practice, for each minibatch a random binary mask is applied to all the input
 			\text{d}  &  \text{j} & \text{p} & \text{v}
 		\end{array} \right)
 	\]
-	\item \textbf{repackage\_hidden(hidden)}  At each loop in the train() function, the RNN model is trained on a sequence of new characters produced by the  get\_batch() function and the gradients are backpropagated (BPTT) through the RNNs computational graph. From one iteration of the loop to the next iteration, if the hidden states from the previous iteration were still have a reference to the graph, the gradients will be backpropagated through them. This is not the intended behavior as we want the RNN's gradients to be propagated independently for each batch of words (sequence). To get rid of the references of the hidden states, repackage\_hidden(hidden) function,  wraps these hidden states into brand new tensors that have no history. This allows the previous graph to go out of scope and free up the memory for the next iteration.
+	\item \textbf{repackage\_hidden(hidden)}  At each loop in the train() function, the RNN model is trained on a sequence of new characters produced by the  get\_batch() function and the gradients are backpropagated (BPTT) through the RNNs computational graph. From one iteration of the loop to the next iteration, if the hidden states from the previous iteration were still have a reference to the graph, the gradients will be backpropagated through them. This is not the intended behavior as we want the RNN's gradients to be propagated independently for each batch of words (sequence). To get rid of the references of the hidden states, repackage\_hidden(hidden) function wraps these hidden states into brand new tensors that have no history. This allows the previous graph to go out of scope and free up the memory for the next iteration.
 	\item \textbf{Clipping the gradients:} is performed using  torch.nn.utils.clip\_grad\_norm. During the backpropagation, gradients are not clipped until the backward pass is completed and before the model parameters are updated.
 	\end{itemize}
 		   
@@ -384,8 +379,34 @@ In practice, for each minibatch a random binary mask is applied to all the input
     
    \item[(b)]
    Find and explain where and how the back-propagation through time (BPTT) takes place (you may need to delve into PyTorch source code). 
+   The backpropagation through time starts in the train function at the line: loss.backward(). The generalized back-propagation algorithm is applied to the unrolled computational graph $\vect{h}^(t) = f(\vect{h}^{t-1}, \vect{x}^t; \theta)$ where $\vect{h}^t$ represents the hidden state a time t and $\vect{x}^t$ the input $\vect{x}$ a time t and $\theta$ the model parameters.
+   The RNNModel architecture is:
+   \[
+  	 \begin{tabular}{| c | c | c |}
+  	  \hline
+	  \text{Layer} & \text{Output Shape}  \\
+	  \hline
+	  \text{Linear} & \text{(args.nlayers, ntokens)}  \\
+	  \hline
+	  \text{Recurrent Network} & \text{(args.emsize, args.nlayers)}  \\
+	  \hline
+	  \text{Dropout} & \text{(ntokens, args.emsize)} \\
+	  \hline
+	  \text{Embedding} & \text{(ntokens, args.emsize)}  \\
+	  \hline
+	\end{tabular}
+\] 
+Recurrent Network: LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagation will trickle down starting from the loss, to the linear layer, through the recurrent network unrolled computational graph up to and including the embedding layer. BPTT refers to the back-propagation specific to the recurrent network seen as unrolled computational graph. For RNN\_TANH, using the conventions in the \href{https://www.deeplearningbook.org/contents/rnn.html}{in the Deep Learning book}, the forward equations at time t:
+	\begin{align*}
+		\vect{a}^{(t)} &= \vect{b} + \matr{W} \vect{h}^{(t-1)} + \matr{U} \vect{x}^{(t)}\\
+		\vect{h}^{(t)} &= \tanh(\vect{a}^{(t)}) \\
+		\vect{o}^{(t)} &=  \vect{c} + \matr{V} \vect{h}^{(t)} 
+	\end{align*}
+	
     \item[(c)]      
     Describe why we need the repackage\_hidden(h) function, and how it works.
+ At each loop in the train() function, the RNN model is trained on a sequence of new characters produced by the  get\_batch() function and the gradients are backpropagated (BPTT) through the RNNs computational graph. From one iteration of the loop to the next iteration, if the hidden states from the previous iteration were still have a reference to the graph, the gradients will be backpropagated through them. This is not the intended behavior as we want the RNN's gradients to be propagated independently for each batch of words (sequence). To get rid of the references of the hidden states, repackage\_hidden(hidden) function  wraps these hidden states into, \textit{fresh}, new tensors that have no history. This allows the previous graph to go out of scope and free up the memory for the next iteration.
+    
      \item[(d)] 
     Why is there a --tied (tie the word embedding and softmax weights) option?
      \item[(e)] 
