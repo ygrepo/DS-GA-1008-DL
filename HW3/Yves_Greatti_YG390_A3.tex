@@ -209,9 +209,10 @@ In practice, for each minibatch a random binary mask is applied to all the input
 	         \node(b1)  [block, below of=c1, text width=3cm] {epoch = 1\\ lr = args.lr};
 	         \node(d1)  [decision, below of=b1, text width=3cm, node distance=3cm]{epoch $\le$ args.epoch};
 		\node [right of=d1, xshift=0.5cm, yshift=0.2cm]  {no};
+		
 		% Main flow
 	         \node(p1)  [process, below of=d1, node distance=3cm] {\textbf{train()}};
-	         \node(p2)  [process, below of=p1, text width=5cm, node distance = 2cm] { val\_loss = \textbf{evaluate}(train\_data)};
+	         \node(p2)  [process, below of=p1, text width=5cm, node distance = 2cm] { val\_loss = \textbf{evaluate}(val\_data)};
 	         \node(d2)  [decision, below of=p2,  text width=3cm, node distance=3cm]{val\_loss $<$ best\_val\_loss};
 	         \node(b2)  [block, left of=d2, text width=3cm, xshift=-3cm] {Save model};
 	         \node(b3)  [block, below of=b2, text width=4cm] {best\_val\_loss = val\_loss};
@@ -270,7 +271,7 @@ In practice, for each minibatch a random binary mask is applied to all the input
         
                	\node (start) [startstop] {Start};
 		\node(b1)  [block, below of=start] {model.train()};
-		\node(b2)  [block, below of=b1, text width=5cm] {total\_loss = 0\\hidden = model.init\_hidden()\\batch=i=0};
+		\node(b2)  [block, below of=b1, text width=5cm] {total\_loss = batch = i = 0\\hidden = model.init\_hidden()};
 		\node(d1) [decision, below of=b2, yshift=-1.5cm]{i $<$ train\_data.size(0) - 1};
 		\node [below of=d1, xshift=1.3cm]  {yes};
 		\node(b3)  [block, below of=d1,  text width=5cm, yshift=-1.5cm] {data, targets = get\_batch(train\_data, i)};
@@ -324,8 +325,62 @@ In practice, for each minibatch a random binary mask is applied to all the input
          \end{tikzpicture}
     \end{center}
 
-   
-   % \newpage
+    \subsection*{Main.evaluate() Component}
+      	There are not important functions in the evaluate() function which have not already been covered. The major differences with the train function  are:
+	\begin{enumerate}
+	\item No gradients are calculated, no backprogation is performed, no gradient clipping, no update of the model parameters with the gradients. Although the repackage\_hidden is invoked, it should not be necessary to do so.
+	\item The function accepts the parameter data source so it can be invoked for the validation and test datasets.	
+	\item At each iteration the loss is multiplied by the sequence length and added to the total loss. At exit, the evaluate function returns the total\_loss divided by the total size of the data source
+	returning in effect the updated total loss.
+	\end{enumerate}
+	
+    \begin{center}
+         \begin{tikzpicture}[node distance = 2cm, auto]
+        
+               	\node (start) [startstop] {Start};
+		\node (in1) [io, below of=start,  text width=3.5cm, node distance = 1.5cm] {Input data\_source};
+		\node(p1) [process, below of=in1,  text width=5cm] {Set the model in evaluation mode:\\ disable dropout};
+		\node(b1)  [block, below of=p1, text width=5cm] {total\_loss = i = 0\\hidden = model.init\_hidden()};
+		\node(p2) [process, below of=b1,  text width=5cm, yshift=-0.5mm] {Disable gradient computation};
+		\node(d1) [decision, below of=p2, yshift=-1.5cm]{i $<$ data\_source.size(0) - 1};
+		\node(c2)  [cloud, right of=d1, xshift=-6cm] {2};
+		\node [below of=d1, xshift=1.3cm]  {yes};
+		\node(b2)  [block, below of=d1,  text width=5cm, yshift=-1.5cm] {data, targets = get\_batch(data\_source, i)};
+		\node(b3)  [block, right of=b2, xshift=4cm, text width=5cm] {total\_loss = total\_loss / len(data\_source)};
+		\node(c1)  [cloud, below of=b2, yshift=-0.1cm] {1};
+	        \node (stop) [startstop, below of=b3, yshift=-1cm] {Stop};
+
+		 % Draw edges
+		\path [line] (start) -- (in1);
+		\path [line] (in1) -- (p1);
+		\path [line] (p1) -- (b1);
+		\path [line] (b1) -- (p2);
+		\path [line] (p2) -- (d1);
+		\path [line] (d1) -- (b2);
+		\path [line] (b2) -- (c1);
+		\path [line] (d1) -| node {no} (b3);
+		\path [line] (b3) -- (stop);
+	         \path [line] (c2) -- (d1);
+
+         \end{tikzpicture}
+    \end{center}
+    
+    \begin{center}
+         \begin{tikzpicture}[node distance = 2cm, auto]
+        		\node(c1) [cloud, below of=p1]  {1};
+		\node(p1)  [process, below of=c1,  text width=5cm]{Compute the cross entropy loss between model's output and targets};
+		\node(b1)  [block, below of=p1,  text width=7cm]{total\_loss =  total\_loss + len(data) * loss};
+		\node(b2)  [block, below of=b1, text width=5cm] {i = i + args.bptt};
+		\node(c2)  [cloud, below of=b2] {2};
+		
+		 % Draw edges
+		\path [line] (c1) -- (p1);
+		\path [line] (p1) -- (b1);
+		\path [line] (b1) -- (b2);
+		\path [line] (b2) -- (c2);
+		
+         \end{tikzpicture}
+    \end{center}
     
    \item[(b)]
    Find and explain where and how the back-propagation through time (BPTT) takes place (you may need to delve into PyTorch source code). 
