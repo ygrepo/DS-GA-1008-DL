@@ -396,12 +396,7 @@ In practice, for each minibatch a random binary mask is applied to all the input
 	  \hline
 	\end{tabular}
 \] 
-Recurrent Network: LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagation will trickle down starting from the loss, to the linear layer, through the recurrent network unrolled computational graph up to and including the embedding layer. BPTT refers to the back-propagation specific to the recurrent network seen as unrolled computational graph. For RNN\_TANH, using the conventions in the \href{https://www.deeplearningbook.org/contents/rnn.html}{in the Deep Learning book}, the forward equations at time t:
-	\begin{align*}
-		\vect{a}^{(t)} &= \vect{b} + \matr{W} \vect{h}^{(t-1)} + \matr{U} \vect{x}^{(t)}\\
-		\vect{h}^{(t)} &= \tanh(\vect{a}^{(t)}) \\
-		\vect{o}^{(t)} &=  \vect{c} + \matr{V} \vect{h}^{(t)} 
-	\end{align*}
+Recurrent Network is either LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagation will trickle down starting from the loss, to the linear layer, through the recurrent network unrolled computational graph up to and including the embedding layer. BPTT refers to the back-propagation specific to the recurrent network seen as unrolled computational graph. It stops at line 158 with the line: hidden = repackage\_hidden(hidden) where the hidden states of the model are detached from the computational graph.
 	
     \item[(c)]      
     Describe why we need the repackage\_hidden(h) function, and how it works.
@@ -409,6 +404,16 @@ Recurrent Network: LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagation will 
     
      \item[(d)] 
     Why is there a --tied (tie the word embedding and softmax weights) option?
+    The model can be separated into two components:
+    \begin{itemize}
+     \item The encoder which takes a one hot vector of an input word, multiplies it by the a matrix to give a word embedding. 
+     \item The decoder which multiplies the word embedding by another matrix resulting to an output embedding vector. This vector is then passed through a cross entropy loss, normalizing its values into a probability distribution.
+    \end{itemize}
+    Input embedding and output embedding have few common properties. The first property they share is that they are both of the same size (args.emsize). The second property is that they will show similar behavior.
+    The input embedding words with similar meanings will be represented by similar vectors (in term of cosine similarity). Given the representation from the RNN, the decoder would like to assign similar probabilities to similar words.
+    Therefore similar words are represented by similar vectors in the output embedding. Experiments have also shown that the word representations in the output embedding are of much higher quality than the ones in the input
+    embedding. In a weight tied model, a single high quality embedding matrix is used in two places in the model. In addition weight tying reduces the number of parameters (reduces training speed), and has a regularization effect
+    as the model has less capacity to overfit.       
      \item[(e)] 
      Compare LSTM and GRU performance (validation perplexity and training time) for different values of the following parameters: number of epochs, number of layers, hidden units size, input embedding dimensionality, BPTT temporal interval, and non- linearities (pick just 3 of these parameters and experiment with 2-3 different values for each).
      \item[(f)] Why do we compute performance on a test set as well? What is this number good for?
