@@ -376,7 +376,65 @@ In practice, for each minibatch a random binary mask is applied to all the input
 		
          \end{tikzpicture}
     \end{center}
-    
+   
+   \subsection*{Profiling}
+   
+   \subsubsection*{batchify}
+   Most of the time as indicated in column \%Time is spent in the reshaping of the data (Fig. ~\ref{fig:batchify}).
+   \begin{figure}[h!]
+  		 \centering
+ 	 \includegraphics[width=\linewidth]{batchify.png}
+ 	 \caption{batchify.}
+ 	 \label{fig:batchify}
+   \end{figure}
+
+   \subsubsection*{repackage\_hidden}
+   This is a recursive function, if the computational time percentages are not affected by the recursion: the time is equally spent across the function  (Fig. ~\ref{fig:repackagehidden}).
+    \begin{figure}[h!]
+         \centering
+ 	 \includegraphics[width=\linewidth]{repackageHidden.png}
+ 	 \caption{repackage\_hidden.}
+ 	 \label{fig:repackagehidden}
+   \end{figure}
+   
+   \subsubsection*{get\_batch}
+   Another computational time uniformly distributed cross the function (Fig. ~\ref{fig:getbatch}).
+   \begin{figure}[h!]
+  	\centering
+ 	 \includegraphics[width=\linewidth]{getBatch.png}
+ 	 \caption{get\_batch.}
+ 	 \label{fig:getbatch}
+   \end{figure}
+
+   \subsubsection*{train}
+   The time is split between the forward pass executed by the model and the back-propagation triggered at line 165: loss.backward()  (Fig. ~\ref{fig:train}).
+   \begin{figure}[h]
+  	\centering
+ 	 \includegraphics[width=\linewidth]{train.png}
+ 	 \caption{train.}
+ 	 \label{fig:train}
+   \end{figure}
+
+
+   \subsubsection*{evaluate}
+   60\% of the time is spent inside the model processing the data and 30\% is taken by the computation of the loss (Fig. ~\ref{fig:evaluate}).
+   \begin{figure}[h!]
+  	\centering
+ 	 \includegraphics[width=\linewidth]{evaluate.png}
+ 	 \caption{evaluate.}
+ 	 \label{fig:evaluate}
+   \end{figure}
+
+  \subsubsection*{main flow}
+   Most of the time, as you will expect, is spent within the train() function and  about 3\% (2.3\% and 2.6\%)  are consumed by the evaluation on the validation and test datasets (Fig. ~\ref{fig:main}).
+   \begin{figure}[h!]
+  	\centering
+ 	 \includegraphics[width=\linewidth]{main.png}
+ 	 \caption{main.}
+ 	 \label{fig:main}
+   \end{figure}
+
+           
    \item[(b)]
    Find and explain where and how the back-propagation through time (BPTT) takes place (you may need to delve into PyTorch source code). 
    The backpropagation through time starts in the train function at the line: loss.backward(). The generalized back-propagation algorithm is applied to the unrolled computational graph $\vect{h}^(t) = f(\vect{h}^{t-1}, \vect{x}^t; \theta)$ where $\vect{h}^t$ represents the hidden state a time t and $\vect{x}^t$ the input $\vect{x}$ a time t and $\theta$ the model parameters.
@@ -409,10 +467,10 @@ Recurrent Network is either LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagat
      \item The encoder which takes a one hot vector of an input word, multiplies it by the a matrix to give a word embedding. 
      \item The decoder which multiplies the word embedding by another matrix resulting to an output embedding vector. This vector is then passed through a cross entropy loss, normalizing its values into a probability distribution.
     \end{itemize}
-    Input embedding and output embedding have few common properties. The first property they share is that they are both of the same size (args.emsize). The second property is that they will show similar behavior.
-    The input embedding words with similar meanings will be represented by similar vectors (in term of cosine similarity). Given the representation from the RNN, the decoder would like to assign similar probabilities to similar words.
+    Input embedding and output embedding have few common properties. The first property, they share is that they are both of the same size (args.emsize). The second property is that they will show similar behavior.
+    The input embedding words with similar meanings, will be represented by similar vectors (in term of cosine similarity). Given the representation from the RNN, the decoder would like to assign similar probabilities to similar words.
     Therefore similar words are represented by similar vectors in the output embedding. Experiments have also shown that the word representations in the output embedding are of much higher quality than the ones in the input
-    embedding. In a weight tied model, a single high quality embedding matrix is used in two places in the model. In addition weight tying reduces the number of parameters (reduces training speed), and has a regularization effect
+    embedding. In a weight tied model, a single high quality embedding matrix is used in two places in the model. In addition weight tying reduces the number of parameters (increases training speed), and has a regularization effect
     as the model has less capacity to overfit.       
      \item[(e)] 
      Compare LSTM and GRU performance (validation perplexity and training time) for different values of the following parameters: number of epochs, number of layers, hidden units size, input embedding dimensionality, BPTT temporal interval, and non- linearities (pick just 3 of these parameters and experiment with 2-3 different values for each).
