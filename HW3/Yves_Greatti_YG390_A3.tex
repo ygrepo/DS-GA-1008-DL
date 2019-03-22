@@ -407,7 +407,7 @@ In practice, for each minibatch a random binary mask is applied to all the input
    \end{figure}
 
    \subsubsection*{train}
-   The time is split between the forward pass executed by the model and the back-propagation triggered at line 165: loss.backward()  (Fig. ~\ref{fig:train}).
+   The time is split between the forward pass executed by the model (46\%) and the back-propagation triggered at line 165: loss.backward() (44\%) (Fig. ~\ref{fig:train}).
    \begin{figure}[h]
   	\centering
  	 \includegraphics[width=\linewidth]{train.png}
@@ -417,7 +417,7 @@ In practice, for each minibatch a random binary mask is applied to all the input
 
 
    \subsubsection*{evaluate}
-   60\% of the time is spent inside the model processing the data and 30\% is taken by the computation of the loss (Fig. ~\ref{fig:evaluate}).
+   66\% of the time is spent inside the model processing the data and 30\% is taken by the computation of the loss (Fig. ~\ref{fig:evaluate}).
    \begin{figure}[h!]
   	\centering
  	 \includegraphics[width=\linewidth]{evaluate.png}
@@ -426,7 +426,7 @@ In practice, for each minibatch a random binary mask is applied to all the input
    \end{figure}
 
   \subsubsection*{main flow}
-   Most of the time, as you will expect, is spent within the train() function and  about 3\% (2.3\% and 2.6\%)  are consumed by the evaluation on the validation and test datasets (Fig. ~\ref{fig:main}).
+   Most of the time, as you will expect, is spent within the train() function (95\%) and  about 5\% (2.3\% and 2.6\%)  are consumed by the evaluation on the validation and test datasets (Fig. ~\ref{fig:main}).
    \begin{figure}[h!]
   	\centering
  	 \includegraphics[width=\linewidth]{main.png}
@@ -442,19 +442,19 @@ In practice, for each minibatch a random binary mask is applied to all the input
    \[
   	 \begin{tabular}{| c | c | c |}
   	  \hline
-	  \text{Layer} & \text{Output Shape}  \\
+	  \textbf{Layer} & \textbf{Parameters}  \\
 	  \hline
-	  \text{Linear} & \text{(args.nlayers, ntokens)}  \\
+	  \text{Linear} & \text{(args.nhid, ntokens)}  \\
 	  \hline
-	  \text{Recurrent Network} & \text{(args.emsize, args.nlayers)}  \\
+	  \text{Recurrent Network} & \text{(args.emsize, args.nhid, args.nlayers, dropout)}  \\
 	  \hline
-	  \text{Dropout} & \text{(ntokens, args.emsize)} \\
+	  \text{Dropout} & \text{(dropout)} \\
 	  \hline
 	  \text{Embedding} & \text{(ntokens, args.emsize)}  \\
 	  \hline
 	\end{tabular}
 \] 
-Recurrent Network is either LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagation will trickle down starting from the loss, to the linear layer, through the recurrent network unrolled computational graph up to and including the embedding layer. BPTT refers to the back-propagation specific to the recurrent network seen as unrolled computational graph. It stops at line 158 with the line: hidden = repackage\_hidden(hidden) where the hidden states of the model are detached from the computational graph.
+Recurrent Network is either LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagation will trickle down starting from the loss, to the linear layer, through the recurrent network unrolled computational graph, up to and including the embedding layer. BPTT refers to the back-propagation specific to the recurrent network seen as unrolled computational graph. It stops at line 158 with the line: hidden = repackage\_hidden(hidden) where the hidden states of the model are detached from the computational graph.
 	
     \item[(c)]      
     Describe why we need the repackage\_hidden(h) function, and how it works.
@@ -464,17 +464,384 @@ Recurrent Network is either LSTM, RNN\_TANH, RNN\_RELU or GRU. The back-propagat
     Why is there a --tied (tie the word embedding and softmax weights) option?
     The model can be separated into two components:
     \begin{itemize}
-     \item The encoder which takes a one hot vector of an input word, multiplies it by the a matrix to give a word embedding. 
-     \item The decoder which multiplies the word embedding by another matrix resulting to an output embedding vector. This vector is then passed through a cross entropy loss, normalizing its values into a probability distribution.
+     \item The \textbf{encoder}: takes a one hot vector of an input word, multiplies it by the a matrix to give a word embedding. 
+     \item The \textbf{decoder}: multiplies the word embedding by another matrix resulting to an output embedding vector. This vector is then passed through a cross entropy loss, normalizing its values into a probability distribution.
     \end{itemize}
-    Input embedding and output embedding have few common properties. The first property, they share is that they are both of the same size (args.emsize). The second property is that they will show similar behavior.
+    Input embedding and output embedding have few common properties. The first property they share, is that they are both of the same size (number of hidden units per layer is the same as the size of word embeddings) And when the \textit{tied} option is used, encoder and decoder share the same weights . The second property is that they will show similar behavior.
     The input embedding words with similar meanings, will be represented by similar vectors (in term of cosine similarity). Given the representation from the RNN, the decoder would like to assign similar probabilities to similar words.
     Therefore similar words are represented by similar vectors in the output embedding. Experiments have also shown that the word representations in the output embedding are of much higher quality than the ones in the input
     embedding. In a weight tied model, a single high quality embedding matrix is used in two places in the model. In addition weight tying reduces the number of parameters (increases training speed), and has a regularization effect
     as the model has less capacity to overfit.       
+    
      \item[(e)] 
      Compare LSTM and GRU performance (validation perplexity and training time) for different values of the following parameters: number of epochs, number of layers, hidden units size, input embedding dimensionality, BPTT temporal interval, and non- linearities (pick just 3 of these parameters and experiment with 2-3 different values for each).
+     
+     I ran three set of experimentations for the two models LSTM and GRU for a total of 3 epochs for each run and each time recording the training time and validation perplexity:
+     \begin{enumerate}
+     	\item Increasing the number of number of hidden units for the recurrent network by 200: 200, 400, 600
+	\subsubsection*{\textbf{200 hidden units:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 137.61 & 137.48 & 137.81 \\
+	 	 	\hline
+				GRU - Training time (s)		& 134.96& 135.29 & 135.28 \\
+			\hline 
+				LSTM - Validation perplexity	& 254.85 & 207.8 & 176.86 \\
+			\hline 
+				GRU - Validation perplexity	& 274.56 & 223.76 & 203.47 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 412.9 & 405.53 \\
+	 	 	\hline
+				Total Training Time (mn)		& 7 & 7 \\
+			\hline 
+				Average Training Time (s)	 	& 137.63 & 135.18 \\
+			\hline 
+				Average Training Time (mn)	& 2 & 2 \\
+			\hline
+				Min.Validation Perplexity		& 176.86 & 203.47 \\
+			\hline
+				Max.Validation Perplexity		& 254.85 & 274.56 \\
+			\hline
+				Average Validation Perplexity	& 213.17 & 233.93 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	\subsubsection*{\textbf{400 hidden units:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 210.33 & 211.63 & 213.38 \\
+	 	 	\hline
+				GRU - Training time (s)		& 204.34 & 205.51 & 204.79 \\
+			\hline 
+				LSTM - Validation perplexity	& 242.96 & 178.86 & 147.99 \\
+			\hline 
+				GRU - Validation perplexity	& 266.78 & 214.04 & 185.36 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 635.34 & 614.64 \\
+	 	 	\hline
+				Total Training Time (mn)		& 11 & 10 \\
+			\hline 
+				Average Training Time (s)	 	& 211.78 & 204.88 \\
+			\hline 
+				Average Training Time (mn)	& 4 & 3 \\
+			\hline
+				Min.Validation Perplexity		& 147.99 & 185.36 \\
+			\hline
+				Max.Validation Perplexity		& 242.96 & 266.78 \\
+			\hline
+				Average Validation Perplexity	& 189.94 & 222.06 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	\subsubsection*{\textbf{600 hidden units:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 137.61 & 137.48 & 137.81 \\
+	 	 	\hline
+				GRU - Training time (s)		& 277.55 & 278.68 & 278.9 \\
+			\hline 
+				LSTM - Validation perplexity	& 254.85 & 207.8 & 176.86 \\
+			\hline 
+				GRU - Validation perplexity	& 253.95 & 200.07 & 179.45 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 412.9 & 835.13\\
+	 	 	\hline
+				Total Training Time (mn)		& 7 & 14 \\
+			\hline 
+				Average Training Time (s)	 	& 137.63 & 278.38 \\
+			\hline 
+				Average Training Time (mn)	& 2 & 5 \\
+			\hline
+				Min.Validation Perplexity		& 176.86 & 179.45 \\
+			\hline
+				Max.Validation Perplexity		& 254.85 & 253.95 \\
+			\hline
+				Average Validation Perplexity	& 213.17 & 211.16 \\
+			\hline
+		\end{tabular}
+	\] 
+
+
+	\item Increasing the sequence length \textit{bptt} from 35 to 55 and 75
+	\subsubsection*{\textbf{35 bptt:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 137.61 & 137.48 & 137.81 \\
+	 	 	\hline
+				GRU - Training time (s)		& 134.96& 135.29 & 135.28 \\
+			\hline 
+				LSTM - Validation perplexity	& 254.85 & 207.8 & 176.86 \\
+			\hline 
+				GRU - Validation perplexity	& 274.56 & 223.76 & 203.47 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 412.9 & 405.53 \\
+	 	 	\hline
+				Total Training Time (mn)		& 7 & 7 \\
+			\hline 
+				Average Training Time (s)	 	& 137.63 & 135.18 \\
+			\hline 
+				Average Training Time (mn)	& 2 & 2 \\
+			\hline
+				Min.Validation Perplexity		& 176.86 & 203.47 \\
+			\hline
+				Max.Validation Perplexity		& 254.85 & 274.56 \\
+			\hline
+				Average Validation Perplexity	& 213.17 & 233.93 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	\subsubsection*{\textbf{55 bptt:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 129.66 & 129.92 & 129.99 \\
+	 	 	\hline
+				GRU - Training time (s)		& 127	& 127.54 & 127.6 \\
+			\hline 
+				LSTM - Validation perplexity	& 278.91	&  203.52 & 186.98\\
+			\hline 
+				GRU - Validation perplexity	& 280.53 & 233.69 & 185.08 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 389.57 & 382.14\\
+	 	 	\hline
+				Total Training Time (mn)		& 6 & 6 \\
+			\hline 
+				Average Training Time (s)	 	& 129.86 & 127.38 \\
+			\hline 
+				Average Training Time (mn)	& 2 & 2 \\
+			\hline
+				Min.Validation Perplexity		& 186.98 & 185.08 \\
+			\hline
+				Max.Validation Perplexity		& 278.91 & 280.53 \\
+			\hline
+				Average Validation Perplexity	& 223.14 & 233.1 \\
+			\hline
+		\end{tabular}
+	\] 
+
+
+	\subsubsection*{\textbf{75 bptt:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 128.62 & 129.15 & 129.27 \\
+	 	 	\hline
+				GRU - Training time (s)		& 125.53 & 126.14 & 126.18 \\
+			\hline 
+				LSTM - Validation perplexity	& 328.97 & 222.96 & 175.43 \\
+			\hline 
+				GRU - Validation perplexity	& 325.23 & 220.94 & 196.32 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 387.04 & 377.85 \\
+	 	 	\hline
+				Total Training Time (mn)		& 6 & 6 \\
+			\hline 
+				Average Training Time (s)	 	& 129.01 & 125.95 \\
+			\hline 
+				Average Training Time (mn)	& 2 & 2 \\
+			\hline
+				Min.Validation Perplexity		& 175.43 & 196.32 \\
+			\hline
+				Max.Validation Perplexity		& 328.97 & 325.23 \\
+			\hline
+				Average Validation Perplexity	& 242.45 & 247.5 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	\item Increasing the number of recurrent networks starting at 2,4,6
+	\subsubsection*{\textbf{2 recurrent networks:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 137.61 & 137.48 & 137.81 \\
+	 	 	\hline
+				GRU - Training time (s)		& 134.96& 135.29 & 135.28 \\
+			\hline 
+				LSTM - Validation perplexity	& 254.85 & 207.8 & 176.86 \\
+			\hline 
+				GRU - Validation perplexity	& 274.56 & 223.76 & 203.47 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 412.9 & 405.53 \\
+	 	 	\hline
+				Total Training Time (mn)		& 7 & 7 \\
+			\hline 
+				Average Training Time (s)	 	& 137.63 & 135.18 \\
+			\hline 
+				Average Training Time (mn)	& 2 & 2 \\
+			\hline
+				Min.Validation Perplexity		& 176.86 & 203.47 \\
+			\hline
+				Max.Validation Perplexity		& 254.85 & 274.56 \\
+			\hline
+				Average Validation Perplexity	& 213.17 & 233.93 \\
+			\hline
+		\end{tabular}
+	\] 
+	
+	\subsubsection*{\textbf{4 recurrent networks:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 207.91 & 207.91 & 208.35 \\
+	 	 	\hline
+				GRU - Training time (s)		& 200.64 & 200.73 & 135.28 \\
+			\hline 
+				LSTM - Validation perplexity	& 467.44 & 272 & 200.63 \\
+			\hline 
+				GRU - Validation perplexity	& 188785902.8 & 61978.5	 & 429628533.5 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 624.17 & 536.65 \\
+	 	 	\hline
+				Total Training Time (mn)		& 10 & 9 \\
+			\hline 
+				Average Training Time (s)	 	& 208.06 & 178.88 \\
+			\hline 
+				Average Training Time (mn)	& 3 & 3 \\
+			\hline
+				Min.Validation Perplexity		& 200.63 & 61978.5 \\
+			\hline
+				Max.Validation Perplexity		& 467.44 & 429628533.5 \\
+			\hline
+				Average Validation Perplexity	& 313.3566667 & 206158804.9 \\
+			\hline
+		\end{tabular}
+	\] 
+	
+	\subsubsection*{\textbf{6 recurrent networks:}}
+	  \[
+  	 	\begin{tabular}{| c | c | c | c |}
+  	 	 	\hline
+	 	 		\textbf{Epoch} & 1 & 2 & 3  \\
+	  	 	\hline
+	 			LSTM - Training time (s)		& 281.01 & 281.8 & 281.9 \\
+	 	 	\hline
+				GRU - Training time (s)		& 267.79 & 267.59 & 267.83 \\
+			\hline 
+				LSTM - Validation perplexity	& 1066.02	 & 1059.07 & 1040.2 \\
+			\hline 
+				GRU - Validation perplexity	& 31479922593 & 30779997.28 & 44318884.84 \\
+			\hline
+		\end{tabular}
+	\] 
+
+	  \[
+  	 	\begin{tabular}{| c | c | c |}
+  	 	 	\hline
+	 	 		& \textbf{LSTM} &  \textbf{GRU} \\
+	  	 	\hline
+	 			Total Training Time (s)		& 844.71 & 803.21\\
+	 	 	\hline
+				Total Training Time (mn)		& 14 & 13 \\
+			\hline 
+				Average Training Time (s)	 	& 281.57 & 267.74 \\
+			\hline 
+				Average Training Time (mn)	& 5 & 4 \\
+			\hline
+				Min.Validation Perplexity		& 1040.2 & 30779997.28 \\
+			\hline
+				Max.Validation Perplexity		& 1066.02	 & 31479922593\\
+			\hline
+				Average Validation Perplexity	& 1055.096667 & 10518340492\\
+			\hline
+		\end{tabular}
+	\] 
+
+
+     \end{enumerate}
+     Based on these experiments, we can observe that LSTM and GRU have similar training times but the validation perplexity of the LSTM based model is better than the GRU based model.
+     We also notice that as the number of recurrent GRU networks increases, instabilities appear with a validation perplexity going to the roof. At the same time, compared to the GRU model,
+     for the same values of hyper-parameters, the LSTM model is quite stable.
+     
      \item[(f)] Why do we compute performance on a test set as well? What is this number good for?
+     The performances on the test set is an estimation of the performances of the model on unseen data. It gives a measurement of the true prediction capability of the model.
  \end{itemize}   
  
 \end{document}
